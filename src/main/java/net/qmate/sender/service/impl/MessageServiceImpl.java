@@ -24,8 +24,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MessageServiceImpl implements MessageService {
 
-    private static final String PHONE_NUMBER = "phoneNumber";
-    private static final String LOCALE = "locale";
+    @Value("${phone.number.name}")
+    private String phoneNumber;
+    @Value("${locale.name}")
+    private String locale;
     private static final long CREATION_PERIOD_IN_SECONDS = 30;
     private static final String ENTITY_TYPE = "TICKET";
 
@@ -99,11 +101,11 @@ public class MessageServiceImpl implements MessageService {
     public MessageEntity setFields(MessageEntity messageEntity) {
         String workplaceTitle = null;
         String phoneNumber;
-        String locale ;
+        String locale;
         Long ticketTitle;
         try {
-            phoneNumber = fieldService.getFieldValue(new FieldReq(messageEntity.getTicketId(), ENTITY_TYPE, PHONE_NUMBER));
-            locale = fieldService.getFieldValue(new FieldReq(messageEntity.getTicketId(), ENTITY_TYPE, LOCALE));
+            phoneNumber = fieldService.getFieldValue(new FieldReq(messageEntity.getTicketId(), ENTITY_TYPE, this.phoneNumber));
+            locale = fieldService.getFieldValue(new FieldReq(messageEntity.getTicketId(), ENTITY_TYPE, this.locale));
             ticketTitle = fieldService.getTicketTitle(new TicketTitleReq(messageEntity.getTicketId()));
             if (messageEntity.getEventType().equals(EventType.CALLED)) {
                 workplaceTitle = fieldService.getWorkplaceTitle(new TicketTitleReq(messageEntity.getTicketId()));
