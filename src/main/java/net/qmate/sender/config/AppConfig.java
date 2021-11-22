@@ -1,4 +1,4 @@
-package net.qmate.sender;
+package net.qmate.sender.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

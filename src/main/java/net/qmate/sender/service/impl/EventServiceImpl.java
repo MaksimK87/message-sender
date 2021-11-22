@@ -1,11 +1,11 @@
-package net.qmate.sender.service;
+package net.qmate.sender.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import net.qmate.sender.controller.req.EventReq;
+import net.qmate.sender.controller.event.req.EventReq;
 import net.qmate.sender.model.MessageEntity;
 import net.qmate.sender.model.enums.MessageStatus;
-import net.qmate.sender.service.impl.EventService;
-import net.qmate.sender.service.impl.MessageService;
+import net.qmate.sender.service.EventService;
+import net.qmate.sender.service.MessageService;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -19,10 +19,11 @@ public class EventServiceImpl implements EventService {
     @Override
     public void processEvent(EventReq event) {
         MessageEntity messageEntity = new MessageEntity()
-                .setEventType(event.getEventType())
-                .setCreateDateTime(LocalDateTime.now())
                 .setStatus(MessageStatus.NEW)
-                .setTicketId(event.getTicketId());
+                .setEventType(event.getEventType())
+                .setTicketId(event.getTicketId())
+                .setCreateDateTime(LocalDateTime.now())
+                .setUpdateDateTime(LocalDateTime.now());
         messageService.saveMessage(messageEntity);
     }
 }

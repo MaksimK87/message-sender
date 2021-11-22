@@ -10,6 +10,8 @@ import net.qmate.sender.model.enums.MessageStatus;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.UUID;
+
 @Accessors(chain = true)
 @Getter
 @Setter
@@ -29,10 +31,9 @@ public class MessageEntity {
     private LocalDateTime updateDateTime;
     @Enumerated(EnumType.STRING)
     private EventType eventType;
-    private Long ticketId;
+    private UUID ticketId;
     private String phone;
     private String locale;
     private Long ticketTitle;
     private String workplaceTitle;
-
 }

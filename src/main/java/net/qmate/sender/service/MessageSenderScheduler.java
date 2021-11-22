@@ -5,7 +5,6 @@ import net.qmate.sender.model.enums.CpaResponseStatus;
 import net.qmate.sender.model.enums.EventType;
 import net.qmate.sender.model.MessageEntity;
 import net.qmate.sender.model.enums.MessageStatus;
-import net.qmate.sender.service.impl.MessageService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -23,8 +22,16 @@ public class MessageSenderScheduler {
     private final RestTemplate restTemplate;
     @Value("${cpa.host}")
     private String spaHost;
+    @Value("${cpa.request.header.basic.auth}")
+    private String basicAuth;
+    @Value("${cpa.request.body.source-number}")
+    private String providerServiceNumber;
+    @Value("${cpa.request.body.bearer-type}")
+    private String bearerType;
+    @Value("${cpa.request.body.content-type}")
+    private String contentType;
 
-    @Scheduled(fixedDelay = 1000)
+    @Scheduled(fixedDelayString = "${scheduler.delay}")
     void processMessage() {
         List<MessageEntity> newMessages = messageService.getAllNewMessages();
         List<MessageEntity> registered = new ArrayList<>();
@@ -42,21 +49,20 @@ public class MessageSenderScheduler {
     private void sendMessage(List<MessageEntity> messages) {
         messages.forEach(messageEntity -> {
             messageEntity = messageService.setFields(messageEntity);
-            String messageForSubscriber = messageService.createMessageForSubscriber(messageEntity);
-            sendRequest(messageForSubscriber, messageEntity);
+            if (messageEntity.getStatus().equals(MessageStatus.SUCCESS_QUEUE_READ)) {
+                String messageForSubscriber = messageService.createMessageForSubscriber(messageEntity);
+                sendRequest(messageForSubscriber, messageEntity);
+            }
         });
     }
 
     private void sendRequest(String message, MessageEntity messageEntity) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.setBasicAuth("dm9yZGVsOnZvcmRlbA==");
+        HttpHeaders headers = getHeaders();
         Map<String, String> map = new HashMap<>();
-        map.put("source", "101999");
+        map.put("source", providerServiceNumber);
         map.put("destination", messageEntity.getPhone());
-        map.put("bearerType", "sms");
-        map.put("contentType", "text/plain");
+        map.put("bearerType", bearerType);
+        map.put("contentType", contentType);
         map.put("content", message);
         HttpEntity<Map<String, Object>> entity = new HttpEntity(map, headers);
         ResponseEntity<String> responseEntity = restTemplate.postForEntity(spaHost, entity, String.class);
@@ -75,6 +81,14 @@ public class MessageSenderScheduler {
                 .setStatus(MessageStatus.FAIL_SENT)
                 .setUpdateDateTime(LocalDateTime.now());
         messageService.saveMessage(messageEntity);
+    }
+
+    private HttpHeaders getHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.setBasicAuth(basicAuth);
+        return headers;
     }
 }
 

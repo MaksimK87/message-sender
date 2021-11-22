@@ -1,9 +1,9 @@
-package net.qmate.sender.controller;
+package net.qmate.sender.controller.event;
 
 import lombok.RequiredArgsConstructor;
-import net.qmate.sender.controller.req.EventReq;
-import net.qmate.sender.controller.resp.BooleanResp;
-import net.qmate.sender.service.impl.EventService;
+import net.qmate.sender.controller.event.req.EventReq;
+import net.qmate.sender.controller.event.resp.BooleanResp;
+import net.qmate.sender.service.EventService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;

@@ -1,4 +1,4 @@
-package net.qmate.sender.controller.resp;
+package net.qmate.sender.controller.event.resp;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -8,7 +8,5 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 public class BooleanResp {
-
     private Boolean res;
-
 }
