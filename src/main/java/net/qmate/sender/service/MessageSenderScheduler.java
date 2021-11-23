@@ -1,9 +1,9 @@
 package net.qmate.sender.service;
 
 import lombok.RequiredArgsConstructor;
+import net.qmate.sender.model.MessageEntity;
 import net.qmate.sender.model.enums.CpaResponseStatus;
 import net.qmate.sender.model.enums.EventType;
-import net.qmate.sender.model.MessageEntity;
 import net.qmate.sender.model.enums.MessageStatus;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -73,9 +73,31 @@ public class MessageSenderScheduler {
                     .setUpdateDateTime(LocalDateTime.now());
             messageService.saveMessage(messageEntity);
         } else {
-            if (responseEntity.getStatusCode() == HttpStatus.BAD_REQUEST)
+            if (responseEntity.getStatusCode() == HttpStatus.BAD_REQUEST) {
                 messageEntity
                         .setCpaResponseStatus(CpaResponseStatus.BAD_REQUEST);
+            }
+            if (responseEntity.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+                messageEntity
+                        .setCpaResponseStatus(CpaResponseStatus.UNAUTHORIZED);
+            }
+            if (responseEntity.getStatusCode() == HttpStatus.FORBIDDEN) {
+                messageEntity
+                        .setCpaResponseStatus(CpaResponseStatus.FORBIDDEN);
+            }
+            if (responseEntity.getStatusCode() == HttpStatus.NOT_FOUND) {
+                messageEntity
+                        .setCpaResponseStatus(CpaResponseStatus.NOT_FOUND);
+            }
+
+            if (responseEntity.getStatusCode() == HttpStatus.INTERNAL_SERVER_ERROR) {
+                messageEntity
+                        .setCpaResponseStatus(CpaResponseStatus.INTERNAL_ERROR);
+            }
+            if (responseEntity.getStatusCode() == HttpStatus.BAD_GATEWAY) {
+                messageEntity
+                        .setCpaResponseStatus(CpaResponseStatus.BAD_GATEWAY);
+            }
         }
         messageEntity
                 .setStatus(MessageStatus.FAIL_SENT)
