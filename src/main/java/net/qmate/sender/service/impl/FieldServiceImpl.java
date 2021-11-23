@@ -12,6 +12,7 @@ import net.qmate.sender.service.exceptions.FailQueueReadException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Collections;
@@ -32,17 +33,19 @@ public class FieldServiceImpl implements FieldService {
 
     @Override
     public String getFieldValue(FieldReq fieldReq) throws FailQueueReadException {
-        FieldResp fieldResp;
+        FieldResp fieldResp = null;
         String url = qmateHost + qmatePort + prefix + "/field";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         HttpEntity<FieldReq> fieldReqHttpEntity = new HttpEntity(fieldReq, headers);
-        ResponseEntity<FieldResp> responseEntity = restTemplate.postForEntity(url, fieldReqHttpEntity, FieldResp.class);
-        if (responseEntity.getStatusCode() == HttpStatus.OK) {
-            fieldResp = responseEntity.getBody();
-        } else {
-            log.warn("Getting field value is failed {}", fieldReq);
+        try {
+            ResponseEntity<FieldResp> responseEntity = restTemplate.postForEntity(url, fieldReqHttpEntity, FieldResp.class);
+            if (responseEntity.getStatusCode() == HttpStatus.OK) {
+                fieldResp = responseEntity.getBody();
+            }
+        } catch (HttpStatusCodeException e) {
+            log.error("Getting field value from qmate is failed: {} with http status code: {}", fieldReq, e.getStatusCode());
             throw new FailQueueReadException("Getting field value is failed!");
         }
         return fieldResp != null ? fieldResp.getValue() : null;
@@ -50,31 +53,35 @@ public class FieldServiceImpl implements FieldService {
 
     @Override
     public Long getTicketTitle(TicketTitleReq req) throws FailQueueReadException {
-        TicketTitleResp ticketTitleResp;
+        TicketTitleResp ticketTitleResp = null;
         String url = qmateHost + qmatePort + prefix + "/ticket-title";
         HttpHeaders headers = getHeaders();
         HttpEntity<TicketTitleReq> titleReqHttpEntity = new HttpEntity(req, headers);
-        ResponseEntity<TicketTitleResp> responseEntity = restTemplate.postForEntity(url, titleReqHttpEntity, TicketTitleResp.class);
-        if (responseEntity.getStatusCode() == HttpStatus.OK) {
-            ticketTitleResp = responseEntity.getBody();
-        } else {
-            log.warn("Getting ticket title is failed {}", req);
-            throw new FailQueueReadException("Getting ticket title is failed!");
+        try {
+            ResponseEntity<TicketTitleResp> responseEntity = restTemplate.postForEntity(url, titleReqHttpEntity, TicketTitleResp.class);
+            if (responseEntity.getStatusCode() == HttpStatus.OK) {
+                ticketTitleResp = responseEntity.getBody();
+            }
+        } catch (HttpStatusCodeException e) {
+            log.error("Getting ticket title from qmate is failed: {} with http status code: {}", req, e.getStatusCode());
+            throw new FailQueueReadException("Getting field value is failed!");
         }
         return ticketTitleResp != null ? ticketTitleResp.getKey() : null;
     }
 
     @Override
     public String getWorkplaceTitle(TicketTitleReq req) throws FailQueueReadException {
-        WorkplaceTitleResp workplaceTitleResp;
+        WorkplaceTitleResp workplaceTitleResp = null;
         String url = qmateHost + qmatePort + prefix + "/workplace-title";
         HttpHeaders headers = getHeaders();
         HttpEntity<TicketTitleReq> titleReqHttpEntity = new HttpEntity(req, headers);
-        ResponseEntity<WorkplaceTitleResp> responseEntity = restTemplate.postForEntity(url, titleReqHttpEntity, WorkplaceTitleResp.class);
-        if (responseEntity.getStatusCode() == HttpStatus.OK) {
-            workplaceTitleResp = responseEntity.getBody();
-        } else {
-            log.warn("Getting workplace title is failed {}", req);
+        try {
+            ResponseEntity<WorkplaceTitleResp> responseEntity = restTemplate.postForEntity(url, titleReqHttpEntity, WorkplaceTitleResp.class);
+            if (responseEntity.getStatusCode() == HttpStatus.OK) {
+                workplaceTitleResp = responseEntity.getBody();
+            }
+        } catch (HttpStatusCodeException e) {
+            log.error("Getting workplace title from qmate is failed: {} with http status code: {}", req, e.getStatusCode());
             throw new FailQueueReadException("Getting workplace title is failed!");
         }
         return workplaceTitleResp != null ? workplaceTitleResp.getWorkplaceTitle() : null;

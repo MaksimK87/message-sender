@@ -1,6 +1,7 @@
 package net.qmate.sender.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.qmate.sender.model.MessageEntity;
 import net.qmate.sender.model.enums.CpaResponseStatus;
 import net.qmate.sender.model.enums.EventType;
@@ -9,11 +10,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
 import java.util.*;
 
+@Slf4j
 @RequiredArgsConstructor
 @Component
 public class MessageSenderScheduler {
@@ -65,44 +68,48 @@ public class MessageSenderScheduler {
         map.put("contentType", contentType);
         map.put("content", message);
         HttpEntity<Map<String, Object>> entity = new HttpEntity(map, headers);
-        ResponseEntity<String> responseEntity = restTemplate.postForEntity(spaHost, entity, String.class);
-        if (responseEntity.getStatusCode() == HttpStatus.ACCEPTED) {
-            messageEntity
-                    .setStatus(MessageStatus.SUCCESS_SENT)
-                    .setCpaResponseStatus(CpaResponseStatus.ACCEPTED)
-                    .setUpdateDateTime(LocalDateTime.now());
-            messageService.saveMessage(messageEntity);
-        } else {
-            if (responseEntity.getStatusCode() == HttpStatus.BAD_REQUEST) {
+        try {
+            ResponseEntity<String> responseEntity = restTemplate.postForEntity(spaHost, entity, String.class);
+            if (responseEntity.getStatusCode() == HttpStatus.ACCEPTED) {
+                messageEntity
+                        .setStatus(MessageStatus.SUCCESS_SENT)
+                        .setCpaResponseStatus(CpaResponseStatus.ACCEPTED)
+                        .setUpdateDateTime(LocalDateTime.now());
+                messageService.saveMessage(messageEntity);
+                log.info("sms: {} - was sent to subscriber successfully!",message);
+            }
+        } catch (RestClientResponseException e) {
+            if (e.getRawStatusCode() == HttpStatus.BAD_REQUEST.value()) {
                 messageEntity
                         .setCpaResponseStatus(CpaResponseStatus.BAD_REQUEST);
             }
-            if (responseEntity.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+            if (e.getRawStatusCode() == HttpStatus.UNAUTHORIZED.value()) {
                 messageEntity
                         .setCpaResponseStatus(CpaResponseStatus.UNAUTHORIZED);
             }
-            if (responseEntity.getStatusCode() == HttpStatus.FORBIDDEN) {
+            if (e.getRawStatusCode() == HttpStatus.FORBIDDEN.value()) {
                 messageEntity
                         .setCpaResponseStatus(CpaResponseStatus.FORBIDDEN);
             }
-            if (responseEntity.getStatusCode() == HttpStatus.NOT_FOUND) {
+            if (e.getRawStatusCode() == HttpStatus.NOT_FOUND.value()) {
                 messageEntity
                         .setCpaResponseStatus(CpaResponseStatus.NOT_FOUND);
             }
 
-            if (responseEntity.getStatusCode() == HttpStatus.INTERNAL_SERVER_ERROR) {
+            if (e.getRawStatusCode() == HttpStatus.INTERNAL_SERVER_ERROR.value()) {
                 messageEntity
                         .setCpaResponseStatus(CpaResponseStatus.INTERNAL_ERROR);
             }
-            if (responseEntity.getStatusCode() == HttpStatus.BAD_GATEWAY) {
+            if (e.getRawStatusCode() == HttpStatus.BAD_GATEWAY.value()) {
                 messageEntity
                         .setCpaResponseStatus(CpaResponseStatus.BAD_GATEWAY);
             }
+            log.error("Fail to send sms to subscriber with status code: {}", e.getRawStatusCode());
+            messageEntity
+                    .setStatus(MessageStatus.FAIL_SENT)
+                    .setUpdateDateTime(LocalDateTime.now());
+            messageService.saveMessage(messageEntity);
         }
-        messageEntity
-                .setStatus(MessageStatus.FAIL_SENT)
-                .setUpdateDateTime(LocalDateTime.now());
-        messageService.saveMessage(messageEntity);
     }
 
     private HttpHeaders getHeaders() {
